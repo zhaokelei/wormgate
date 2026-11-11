@@ -165,8 +165,7 @@ func New(mgr *config.Manager, logger *logx.Logger) (*Server, error) {
 			zap.Bool("reprinted", boot.TokenReprinted),
 			zap.String("note", "rotate or create per-user tokens in the admin console"))
 		// Usability: give the operator a command they can paste on the client
-		// machine instead of having to write a config file first (frp requires
-		// a frpc.ini before the first connection).
+		// machine instead of having to write a config file first.
 		addr := "127.0.0.1:7000"
 		if h, p, err := net.SplitHostPort(cfg.Server.ControlAddr); err == nil {
 			if h == "" || h == "0.0.0.0" || h == "::" {

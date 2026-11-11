@@ -6,7 +6,7 @@ import (
 )
 
 const scalarDoc = `# Wormgate server configuration
-# NOTE: ports 7000/80/443 are already used by frps on this host.
+# NOTE: ports 7000/80/443 are already used by other services on this host.
 log:
   level: info
 
@@ -32,7 +32,7 @@ func TestSetNestedScalarInsertsAndKeepsComments(t *testing.T) {
 	}
 	for _, want := range []string{
 		"# Wormgate server configuration",
-		"# NOTE: ports 7000/80/443 are already used by frps on this host.",
+		"# NOTE: ports 7000/80/443 are already used by other services on this host.",
 		"# trailing note",
 		"  http:\n    addr: 0.0.0.0:8080\n    domain: 5t.pw\n",
 	} {

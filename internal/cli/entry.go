@@ -42,7 +42,7 @@ func loopbackAddr(addr string) string {
 	return net.JoinHostPort(h, p)
 }
 
-// RunServerMain is the fps entry point. Unlike frps, no subcommand and no
+// RunServerMain is the fps entry point. No subcommand and no
 // configuration file are required: `fps` alone starts a working server.
 func RunServerMain(args []string) int { return runRoleMain(args, "server") }
 
