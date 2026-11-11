@@ -1,0 +1,126 @@
+/* ==========================================================================
+ * Responsive layout shared by the client and admin consoles.
+ * Loaded last so it can override both the design system and view-level rules.
+ *
+ * Breakpoints:
+ *   <= 1180px  denser grids for small laptops
+ *   <= 900px   icon rail, wrapped page headers
+ *   <= 760px   rail becomes a horizontal top bar; single-column content
+ *   <= 480px   phones: compact spacing, full-width dialogs and buttons
+ * ========================================================================== */
+
+@media (max-width: 1180px) {
+  .wg-grid.kpi { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+  .wg-grid.cols-2,
+  .wg-grid.cols-3 { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+}
+
+@media (max-width: 900px) {
+  .wg-page { padding: 16px 16px 32px; }
+  .wg-card-head,
+  .wg-card-foot { flex-wrap: wrap; gap: 8px; }
+  .wg-kpi-value { font-size: var(--fs-20); }
+}
+
+/* The rail turns into a compact horizontal nav strip. It stays sticky so the
+   navigation remains reachable while long tables scroll vertically. */
+@media (max-width: 760px) {
+  /* AppShell.vue emits its global <style> AFTER this file in the Vite bundle.
+     Media queries do not add specificity, so the shell's own .wg-rail rules
+     would win. These layout declarations therefore need to outrank them. */
+  .wg-shell,
+  .wg-shell.collapsed { display: block !important; }
+
+  .wg-rail {
+    position: sticky;
+    top: 0;
+    height: auto !important;
+    width: 100%;
+    flex-direction: row !important;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-right: 0;
+    border-bottom: 1px solid var(--hairline);
+    overflow: visible;
+  }
+  .wg-rail-brand { flex: none; padding: 0; }
+  .wg-rail-brand-text,
+  .wg-rail-status,
+  .wg-rail-foot,
+  .wg-rail-nav .wg-nav-label,
+  .wg-rail-nav .wg-nav-badge { display: none !important; }
+
+  .wg-rail-nav {
+    flex: 1 1 auto;
+    flex-direction: row !important;
+    gap: 4px;
+    min-height: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  .wg-rail-nav .wg-nav-item {
+    flex: none;
+    width: 38px;
+    height: 34px;
+    padding: 0;
+    justify-content: center;
+  }
+  .wg-rail-nav .wg-nav-item.active::before {
+    left: 50%;
+    top: auto;
+    bottom: -3px;
+    width: 18px;
+    height: 2px;
+    transform: translateX(-50%);
+  }
+  .wg-main { width: 100%; }
+  .wg-page { padding: 14px 12px 28px; gap: 12px; }
+
+  /* View-scoped grids carry a data-v attribute, so they outrank a plain class
+     selector. The extra ancestor + !important keeps the single-column intent. */
+  .wg-page .grid-2,
+  .wg-page .grid-3,
+  .wg-page .row-2,
+  .wg-page .span-2,
+  .wg-grid.kpi,
+  .wg-grid.cols-2,
+  .wg-grid.cols-3 {
+    grid-template-columns: 1fr !important;
+    grid-column: auto !important;
+  }
+  .wg-table { min-width: 620px; }
+  .wg-table-wrap { -webkit-overflow-scrolling: touch; }
+
+  .wg-modal { width: calc(100vw - 20px); max-height: calc(100dvh - 20px); }
+  .wg-modal-head { padding: 14px 14px 10px; }
+  .wg-modal-body { padding: 0 14px; }
+  .wg-modal-foot {
+    position: sticky;
+    bottom: 0;
+    padding: 12px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+    margin-top: 12px;
+  }
+  .login-screen { padding: 16px; }
+  .login-card { width: 100%; max-width: 420px; }
+}
+
+@media (max-width: 480px) {
+  .wg-page { padding: 12px 10px 24px; }
+  .wg-card-body { padding: 12px; }
+  .wg-card-head { padding: 12px; }
+  .wg-kpi { padding: 12px; }
+  .wg-btn,
+  .wg-button { min-height: 38px; }
+  .wg-modal-foot > * { flex: 1 1 auto; }
+  .wg-hint { font-size: var(--fs-11); }
+  .login-head { gap: 10px; }
+}
+
+/* Short landscape windows: keep the dialog footer visible at all costs. */
+@media (max-height: 620px) {
+  .wg-modal { max-height: calc(100dvh - 16px); }
+  .wg-modal-head { padding: 10px 16px 8px; }
+  .wg-modal-foot { padding-top: 10px; padding-bottom: 10px; margin-top: 8px; }
+}

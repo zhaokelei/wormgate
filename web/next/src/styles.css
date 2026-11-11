@@ -1,0 +1,542 @@
+/* ---------------------------------------------------------------------------
+ * Motion + surface tokens.
+ *
+ * One easing curve for the whole console keeps unrelated animations feeling
+ * like they belong to the same product; `--ease` is mirrored in motion.ts so
+ * JS-driven transitions (count-ups, the nav indicator) use the same timing.
+ * ------------------------------------------------------------------------- */
+:root {
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast: 160ms;
+  --dur: 240ms;
+  --dur-slow: 500ms;
+  /* Route enter is deliberately shorter than the theme cross-fade: content
+     that fades for half a second on every click feels slow, not smooth. */
+  --dur-enter: 380ms;
+  --stagger: 60ms;
+
+  --accent: #1677ff;
+  --accent-soft: rgba(22, 119, 255, 0.14);
+  --accent-line: rgba(22, 119, 255, 0.42);
+}
+
+html[data-theme='dark'] {
+  --surface: rgba(255, 255, 255, 0.03);
+  --surface-hover: rgba(255, 255, 255, 0.055);
+  --edge: rgba(255, 255, 255, 0.08);
+  --edge-strong: rgba(255, 255, 255, 0.14);
+  --row-hover: rgba(22, 119, 255, 0.055);
+  --shadow-lift: 0 10px 24px -18px rgba(0, 0, 0, 0.9);
+}
+
+html[data-theme='light'] {
+  --surface: rgba(255, 255, 255, 0.72);
+  --surface-hover: rgba(0, 0, 0, 0.03);
+  --edge: rgba(0, 0, 0, 0.08);
+  --edge-strong: rgba(0, 0, 0, 0.14);
+  --row-hover: rgba(22, 119, 255, 0.045);
+  --shadow-lift: 0 10px 24px -18px rgba(31, 41, 55, 0.5);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Numbers that tick every second must not change width. */
+.mono {
+  font-family: ui-monospace, SFMono-Regular, 'JetBrains Mono', 'Cascadia Mono', Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.page {
+  padding: 16px 20px 28px;
+}
+
+.page-head {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.page-head h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.page-head p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  opacity: 0.65;
+}
+
+.card-sub {
+  font-size: 12px;
+  font-weight: 400;
+  opacity: 0.6;
+  margin-left: 8px;
+}
+
+/* KPI cards: label / counted value / hint. */
+.kpi-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.kpi-value {
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.kpi-suffix {
+  font-size: 12px;
+  font-weight: 400;
+  opacity: 0.6;
+  margin-left: 2px;
+}
+
+.kpi-hint {
+  font-size: 11px;
+  opacity: 0.55;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 14px 16px 10px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.brand-logo {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: linear-gradient(135deg, #4096ff, #1677ff 55%, #9254de);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 4px 12px -6px rgba(22, 119, 255, 0.8);
+}
+
+.brand small {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  opacity: 0.55;
+}
+
+.u-plot-wrap {
+  width: 100%;
+}
+
+.chart-legend {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding-top: 6px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.8;
+}
+
+.chart-legend-time {
+  opacity: 0.6;
+}
+
+.chart-legend i {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: 1px;
+  opacity: 0.9;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ---------------------------------------------------------------------------
+ * 1. Sidebar: sliding indicator
+ *
+ * The block is one absolutely-positioned element moved by transform, so the
+ * highlight glides between items instead of blinking off and on. antd's own
+ * selected background is turned off in theme.tsx — two highlights would fight.
+ * ------------------------------------------------------------------------- */
+.nav-wrap {
+  position: relative;
+  padding: 2px 0 6px;
+}
+
+.nav-indicator {
+  position: absolute;
+  top: 0;
+  left: 8px;
+  right: 8px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 1px rgba(22, 119, 255, 0.16), 0 8px 20px -16px rgba(22, 119, 255, 0.9);
+  pointer-events: none;
+  z-index: 0;
+  transition:
+    transform var(--dur) var(--ease),
+    height var(--dur) var(--ease),
+    opacity var(--dur-fast) var(--ease);
+}
+
+/* The 3px brand bar plus its glow. */
+.nav-indicator::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 3px;
+  height: 60%;
+  border-radius: 0 3px 3px 0;
+  background: var(--accent);
+  transform: translateY(-50%);
+  box-shadow: 0 0 10px 1px rgba(22, 119, 255, 0.75);
+}
+
+.nav-wrap .ant-menu {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+}
+
+.nav-wrap .ant-menu-item {
+  transition: color var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+
+.nav-wrap .ant-menu-item:active {
+  transform: scale(0.985);
+}
+
+.nav-wrap .ant-menu-item-selected {
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------------------
+ * 2. Page transitions: stagger fade-in-up
+ * ------------------------------------------------------------------------- */
+@keyframes page-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.page-enter > .page > * {
+  animation: page-fade-up var(--dur-enter) var(--ease) both;
+}
+
+.page-enter > .page > *:nth-child(1) { animation-delay: 0ms; }
+.page-enter > .page > *:nth-child(2) { animation-delay: 60ms; }
+.page-enter > .page > *:nth-child(3) { animation-delay: 120ms; }
+.page-enter > .page > *:nth-child(4) { animation-delay: 180ms; }
+.page-enter > .page > *:nth-child(5) { animation-delay: 240ms; }
+.page-enter > .page > *:nth-child(6) { animation-delay: 300ms; }
+.page-enter > .page > *:nth-child(n + 7) { animation-delay: 360ms; }
+
+/* ---------------------------------------------------------------------------
+ * 3. Live status: breathing dot
+ * ------------------------------------------------------------------------- */
+.live-dot {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.live-dot > i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #52c41a;
+  box-shadow: 0 0 0 0 rgba(82, 196, 26, 0.55);
+  animation: breathe 2.4s var(--ease) infinite;
+}
+
+.live-dot.is-idle > i {
+  background: #d9d9d9;
+  animation: none;
+  box-shadow: none;
+}
+
+@keyframes breathe {
+  0% { box-shadow: 0 0 0 0 rgba(82, 196, 26, 0.5); opacity: 1; }
+  70% { box-shadow: 0 0 0 7px rgba(82, 196, 26, 0); opacity: 0.72; }
+  100% { box-shadow: 0 0 0 0 rgba(82, 196, 26, 0); opacity: 1; }
+}
+
+/* ---------------------------------------------------------------------------
+ * 4. Empty state: soft area + one pulse
+ * ------------------------------------------------------------------------- */
+.empty-traffic {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 24px 0 28px;
+  text-align: center;
+}
+
+.empty-traffic svg {
+  width: 232px;
+  height: 96px;
+  overflow: visible;
+}
+
+.empty-traffic.is-compact svg {
+  width: 176px;
+  height: 74px;
+}
+
+.empty-traffic.is-compact {
+  padding: 6px 0 12px;
+}
+
+/* The curve carries the "there is a chart here" idea at low contrast; the
+   baseline only hints at the floor, so nothing competes as a hard edge. */
+.empty-traffic .curve {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  opacity: 0.5;
+}
+
+.empty-traffic .baseline {
+  stroke: currentColor;
+  stroke-width: 1;
+  opacity: 0.16;
+}
+
+.empty-traffic .ripple {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ripple 4.8s var(--ease-out) infinite;
+}
+
+.empty-traffic .dot {
+  fill: var(--accent);
+  opacity: 0.85;
+}
+
+@keyframes ripple {
+  0% { transform: scale(0.5); opacity: 0; }
+  30% { opacity: 0.32; }
+  100% { transform: scale(2.1); opacity: 0; }
+}
+
+.empty-traffic-title {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0.78;
+}
+
+.empty-traffic-hint {
+  font-size: 11px;
+  opacity: 0.46;
+}
+
+.empty-traffic.is-compact .empty-traffic-title {
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.empty-traffic.is-compact .empty-traffic-hint {
+  display: none;
+}
+
+/* ---------------------------------------------------------------------------
+ * 5. Tables: hover lift + icon affordance
+ * ------------------------------------------------------------------------- */
+.ant-table-tbody > tr.ant-table-row {
+  transition:
+    transform var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+
+.ant-table-tbody > tr.ant-table-row > td {
+  transition: background-color var(--dur-fast) var(--ease);
+}
+
+.ant-table-tbody > tr.ant-table-row:hover > td {
+  background: var(--row-hover) !important;
+}
+
+.ant-table-tbody > tr.ant-table-row:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lift);
+  position: relative;
+  z-index: 1;
+}
+
+/* Action icons: colour + 1.1x on hover, never on the row itself. */
+.ant-table .ant-btn .anticon {
+  transition:
+    transform var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+
+.ant-table .ant-btn:hover .anticon {
+  transform: scale(1.1);
+  color: var(--accent);
+}
+
+.ant-table .ant-btn-dangerous:hover .anticon {
+  color: #ff4d4f;
+}
+
+/* ---------------------------------------------------------------------------
+ * 6. Progress: smooth width, colour switches with the value
+ * ------------------------------------------------------------------------- */
+/* antd 6 renamed the fill to .ant-progress-track and ships its own transition
+ * on it, so this needs !important to keep the shared curve. .ant-progress-bg is
+ * kept for the older markup. */
+.ant-progress-bg,
+.ant-progress-track {
+  transition:
+    width 600ms var(--ease),
+    background-color 400ms var(--ease),
+    background 400ms var(--ease) !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * 6b. Soft tags: 10% tint + matching text, per theme
+ * ------------------------------------------------------------------------- */
+.soft-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 5px;
+  border: 1px solid transparent;
+  font-size: 11px;
+  line-height: 18px;
+  white-space: nowrap;
+  transition:
+    background-color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+
+html[data-theme='dark'] .soft-tag { color: #c9d1d9; background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.1); }
+html[data-theme='light'] .soft-tag { color: #4b5563; background: rgba(0, 0, 0, 0.04); border-color: rgba(0, 0, 0, 0.07); }
+
+html[data-theme='dark'] .soft-tag.blue { color: #6cb2ff; background: rgba(22, 119, 255, 0.14); border-color: rgba(22, 119, 255, 0.3); }
+html[data-theme='light'] .soft-tag.blue { color: #0958d9; background: rgba(22, 119, 255, 0.1); border-color: rgba(22, 119, 255, 0.22); }
+
+html[data-theme='dark'] .soft-tag.green { color: #73d13d; background: rgba(82, 196, 26, 0.14); border-color: rgba(82, 196, 26, 0.3); }
+html[data-theme='light'] .soft-tag.green { color: #237804; background: rgba(82, 196, 26, 0.12); border-color: rgba(82, 196, 26, 0.26); }
+
+html[data-theme='dark'] .soft-tag.orange { color: #ffb74d; background: rgba(250, 140, 22, 0.14); border-color: rgba(250, 140, 22, 0.3); }
+html[data-theme='light'] .soft-tag.orange { color: #ad4e00; background: rgba(250, 140, 22, 0.12); border-color: rgba(250, 140, 22, 0.26); }
+
+html[data-theme='dark'] .soft-tag.red { color: #ff7875; background: rgba(255, 77, 79, 0.14); border-color: rgba(255, 77, 79, 0.32); }
+html[data-theme='light'] .soft-tag.red { color: #a8071a; background: rgba(255, 77, 79, 0.1); border-color: rgba(255, 77, 79, 0.24); }
+
+html[data-theme='dark'] .soft-tag.purple { color: #b37feb; background: rgba(146, 84, 222, 0.16); border-color: rgba(146, 84, 222, 0.32); }
+html[data-theme='light'] .soft-tag.purple { color: #531dab; background: rgba(146, 84, 222, 0.1); border-color: rgba(146, 84, 222, 0.22); }
+
+/* ---------------------------------------------------------------------------
+ * 7. Dark surfaces: near-black canvas, translucent cards
+ * ------------------------------------------------------------------------- */
+html[data-theme='dark'] body {
+  background: #0a0a0a;
+}
+
+.ant-card {
+  backdrop-filter: blur(12px) saturate(120%);
+  transition:
+    border-color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease),
+    background-color var(--dur) var(--ease);
+}
+
+html[data-theme='dark'] .ant-card:hover {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * 8. Details: theme cross-fade and click feedback on icon buttons
+ * ------------------------------------------------------------------------- */
+html.theme-anim,
+html.theme-anim *,
+html.theme-anim *::before,
+html.theme-anim *::after {
+  transition:
+    background-color var(--dur-slow) var(--ease),
+    border-color var(--dur-slow) var(--ease),
+    color var(--dur-slow) var(--ease),
+    fill var(--dur-slow) var(--ease) !important;
+}
+
+.spin-on-click {
+  transition: transform var(--dur-slow) var(--ease);
+}
+
+.ant-btn:active .spin-on-click {
+  transform: rotate(180deg);
+}
+
+/* ---------------------------------------------------------------------------
+ * Reduced motion: keep the product static for users who asked for that.
+ * ------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .page-enter > .page > * {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .nav-indicator {
+    transition: none !important;
+  }
+}

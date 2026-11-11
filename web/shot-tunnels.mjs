@@ -1,0 +1,15 @@
+import { chromium } from 'playwright-core'
+const b = await chromium.launch({ channel: 'msedge', headless: true })
+const p = await (await b.newContext({ viewport: { width: 1100, height: 620 }, deviceScaleFactor: 2, colorScheme: 'dark' })).newPage()
+await p.goto('http://127.0.0.1:17300/next/login', { waitUntil: 'domcontentloaded' })
+await p.fill('input[autocomplete=username]', 'admin')
+await p.fill('input[autocomplete=current-password]', 'i18n-admin-1234')
+await p.keyboard.press('Enter')
+await p.waitForURL((u) => !u.pathname.endsWith('/login'), { timeout: 15000 })
+await p.goto('http://127.0.0.1:17300/next/tunnels', { waitUntil: 'domcontentloaded' })
+await p.waitForTimeout(2500)
+const tags = await p.evaluate(() =>
+  [...document.querySelectorAll('tbody tr')].map((tr) => (tr.innerText || '').replace(/\s+/g, ' ').trim()))
+console.log(JSON.stringify(tags, null, 1))
+await p.screenshot({ path: '../.run/tunnels-tags.png', fullPage: true })
+await b.close()

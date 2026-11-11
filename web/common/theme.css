@@ -1,0 +1,263 @@
+/* ============================================================================
+ * Wormgate console design tokens + base layer
+ * ----------------------------------------------------------------------------
+ * Dual theme, switched by <html data-theme="dark|light">. Dark is the default
+ * so the first paint never flashes for the common case. Both consoles (client
+ * and admin) import this file, which is what keeps them visually identical.
+ *
+ * Constraints that shaped this file:
+ *  - The Go consoles ship a strict CSP: `font-src 'self' data:` and
+ *    `img-src 'self' data:`. No web fonts, no remote sprites -> system stacks
+ *    and inline SVG only.
+ *  - "精致但不臃肿": tokens are plain custom properties, so the whole system is
+ *    a few KB of CSS instead of a UI-kit runtime.
+ * ========================================================================== */
+
+:root {
+  color-scheme: dark;
+
+  /* ---- Type ------------------------------------------------------------ */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', Roboto, Helvetica,
+    Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'JetBrains Mono', 'Cascadia Mono',
+    Consolas, 'Liberation Mono', monospace;
+
+  --fs-11: 11px;
+  --fs-12: 12px;
+  --fs-13: 13px;
+  --fs-14: 14px;
+  --fs-16: 16px;
+  --fs-20: 20px;
+  --fs-26: 26px;
+  --fs-34: 34px;
+
+  /* ---- Surfaces -------------------------------------------------------- */
+  --bg: #070b11;
+  --bg-glow-a: rgba(45, 212, 191, .07);
+  --bg-glow-b: rgba(139, 92, 246, .07);
+  --surface-1: #0d141d;
+  --surface-2: #111a25;
+  --surface-3: #16202d;
+  --surface-hover: #18222f;
+  --hairline: rgba(148, 163, 184, .14);
+  --hairline-strong: rgba(148, 163, 184, .26);
+  /* Subtle top sheen: makes flat panels read as physical, without gradients
+     heavy enough to band on cheap panels. */
+  --sheen: linear-gradient(180deg, rgba(255, 255, 255, .045), rgba(255, 255, 255, 0) 46%);
+
+  /* ---- Text ------------------------------------------------------------ */
+  --text: #e8eef7;
+  --text-muted: #8b9bb0;
+  --text-dim: #5f7087;
+
+  /* ---- Accents --------------------------------------------------------- */
+  --accent: #2dd4bf;
+  --accent-bright: #5eead4;
+  --accent-soft: rgba(45, 212, 191, .14);
+  --accent-line: rgba(45, 212, 191, .34);
+  --violet: #a78bfa;
+  --violet-bright: #c4b5fd;
+  --violet-soft: rgba(167, 139, 250, .13);
+  --ok: #34d399;     --ok-soft: rgba(52, 211, 153, .13);
+  --warn: #fbbf24;   --warn-soft: rgba(251, 191, 36, .13);
+  --danger: #f87171; --danger-soft: rgba(248, 113, 113, .13);
+  --info: #60a5fa;   --info-soft: rgba(96, 165, 250, .13);
+
+  /* ---- Geometry -------------------------------------------------------- */
+  --r-xs: 6px;
+  --r-sm: 9px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 22px;
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, .4);
+  --shadow-2: 0 10px 26px -8px rgba(0, 0, 0, .6), 0 2px 6px rgba(0, 0, 0, .3);
+  --shadow-3: 0 28px 64px -18px rgba(0, 0, 0, .72), 0 6px 16px rgba(0, 0, 0, .42);
+  --ring: 0 0 0 3px var(--accent-soft);
+
+  /* ---- Layout ---------------------------------------------------------- */
+  --rail-w: 224px;
+  --rail-w-collapsed: 68px;
+  --topbar-h: 58px;
+
+  /* ---- Motion ---------------------------------------------------------- */
+  --ease: cubic-bezier(.22, .61, .36, 1);
+  --ease-out: cubic-bezier(.16, 1, .3, 1);
+  --dur-1: 130ms;
+  --dur-2: 200ms;
+  --dur-3: 320ms;
+}
+
+/* Light theme. Not a naive inversion: surfaces get a real elevation ramp and
+   the accents are darkened so they keep >= 4.5:1 contrast on white. */
+[data-theme='light'] {
+  color-scheme: light;
+
+  --bg: #f4f7fb;
+  --bg-glow-a: rgba(45, 212, 191, .16);
+  --bg-glow-b: rgba(139, 92, 246, .14);
+  --surface-1: #ffffff;
+  --surface-2: #f7f9fc;
+  --surface-3: #eef2f8;
+  --surface-hover: #e9eff7;
+  --hairline: rgba(15, 23, 42, .10);
+  --hairline-strong: rgba(15, 23, 42, .18);
+  --sheen: linear-gradient(180deg, rgba(255, 255, 255, .9), rgba(255, 255, 255, 0) 46%);
+
+  --text: #0f1a28;
+  --text-muted: #566779;
+  --text-dim: #7d8ca0;
+
+  --accent: #0d9488;
+  --accent-bright: #14b8a6;
+  --accent-soft: rgba(13, 148, 136, .11);
+  --accent-line: rgba(13, 148, 136, .3);
+  --violet: #7c3aed;
+  --violet-bright: #8b5cf6;
+  --violet-soft: rgba(124, 58, 237, .10);
+  --ok: #059669;     --ok-soft: rgba(5, 150, 105, .11);
+  --warn: #b45309;   --warn-soft: rgba(180, 83, 9, .11);
+  --danger: #dc2626; --danger-soft: rgba(220, 38, 38, .10);
+  --info: #2563eb;   --info-soft: rgba(37, 99, 235, .10);
+
+  --shadow-1: 0 1px 2px rgba(15, 23, 42, .06);
+  --shadow-2: 0 10px 26px -10px rgba(15, 23, 42, .18), 0 2px 6px rgba(15, 23, 42, .06);
+  --shadow-3: 0 28px 64px -20px rgba(15, 23, 42, .26), 0 6px 16px rgba(15, 23, 42, .08);
+}
+
+/* ---- Reset ------------------------------------------------------------- */
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+* { margin: 0; padding: 0; }
+
+html,
+body,
+#app { height: 100%; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--fs-14);
+  line-height: 1.55;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Ambient light: two very low-alpha radial washes keep the near-black canvas
+   from looking like dead pixels. `fixed` avoids repaint on scroll. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(60rem 40rem at 8% -12%, var(--bg-glow-a), transparent 62%),
+    radial-gradient(52rem 36rem at 102% 4%, var(--bg-glow-b), transparent 60%);
+}
+
+h1, h2, h3, h4 { font-weight: 600; line-height: 1.28; letter-spacing: -.01em; }
+h1 { font-size: var(--fs-26); }
+h2 { font-size: var(--fs-20); }
+h3 { font-size: var(--fs-16); }
+h4 { font-size: var(--fs-14); }
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { color: var(--accent-bright); }
+
+button, input, select, textarea { font: inherit; color: inherit; }
+button { background: none; border: 0; cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+ul, ol { list-style: none; }
+code, kbd, pre { font-family: var(--font-mono); font-size: .92em; }
+
+img, svg { display: block; max-width: 100%; }
+
+/* Numeric alignment: tabular figures stop live-updating counters from
+   jittering their width, which is the single most visible polish detail in a
+   monitoring console. */
+.wg-mono,
+.wg-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'zero' 1;
+}
+
+/* ---- Focus ------------------------------------------------------------- */
+
+:focus { outline: none; }
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-xs);
+}
+
+/* ---- Scrollbars -------------------------------------------------------- */
+
+* { scrollbar-width: thin; scrollbar-color: var(--hairline-strong) transparent; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: var(--hairline-strong);
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover { background: var(--text-dim); background-clip: content-box; }
+*::-webkit-scrollbar-corner { background: transparent; }
+
+/* ---- Selection --------------------------------------------------------- */
+
+::selection { background: var(--accent-soft); color: var(--text); }
+
+/* ---- Utilities --------------------------------------------------------- */
+
+.wg-muted { color: var(--text-muted); }
+.wg-dim { color: var(--text-dim); }
+.wg-accent { color: var(--accent); }
+.wg-danger { color: var(--danger); }
+.wg-ok { color: var(--ok); }
+.wg-warn { color: var(--warn); }
+.wg-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wg-center { display: grid; place-items: center; }
+.wg-spacer { flex: 1 1 auto; }
+.wg-scroll { overflow: auto; overscroll-behavior: contain; }
+.wg-sr {
+  position: absolute; width: 1px; height: 1px; padding: 0;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* ---- Keyframes --------------------------------------------------------- */
+
+@keyframes wg-fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes wg-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes wg-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .45; transform: scale(.82); }
+}
+@keyframes wg-sweep { from { background-position: -180% 0; } to { background-position: 180% 0; } }
+@keyframes wg-spin { to { transform: rotate(360deg); } }
+@keyframes wg-slide-in { from { transform: translateX(100%); } to { transform: none; } }
+
+.wg-enter { animation: wg-fade-up var(--dur-3) var(--ease-out) both; }
+
+/* ---- Accessibility ----------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

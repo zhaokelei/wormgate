@@ -1,0 +1,739 @@
+/* ============================================================================
+ * Wormgate console component layer
+ * ----------------------------------------------------------------------------
+ * Plain CSS classes shared by the client and admin consoles. Vue components in
+ * ./ui wrap them, but the classes are usable standalone, so a page can stay
+ * markup-only when that is simpler.
+ *
+ * Naming: block-element, `wg-` prefixed, variants via data-* attributes. No
+ * utility framework, no runtime CSS-in-JS -> a single cached stylesheet.
+ * ========================================================================== */
+
+/* ==========================================================================
+ * Card / panel
+ * ======================================================================== */
+
+.wg-card {
+  position: relative;
+  background: var(--surface-1);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-1);
+}
+
+/* The sheen is a pseudo-element instead of a background-image on the card so it
+   never interferes with children's opacity/backdrop. */
+.wg-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--sheen);
+  pointer-events: none;
+}
+
+.wg-card > * { position: relative; }
+
+.wg-card.interactive {
+  transition: border-color var(--dur-2) var(--ease), transform var(--dur-2) var(--ease),
+    box-shadow var(--dur-2) var(--ease);
+}
+.wg-card.interactive:hover {
+  border-color: var(--hairline-strong);
+  box-shadow: var(--shadow-2);
+}
+
+/* A card that carries state gets a coloured rail on its leading edge. */
+.wg-card[data-tone='ok'] { border-left: 2px solid var(--ok); }
+.wg-card[data-tone='warn'] { border-left: 2px solid var(--warn); }
+.wg-card[data-tone='danger'] { border-left: 2px solid var(--danger); }
+.wg-card[data-tone='accent'] { border-left: 2px solid var(--accent); }
+
+.wg-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--hairline);
+  min-height: 52px;
+}
+
+.wg-card-title {
+  font-size: var(--fs-13);
+  font-weight: 600;
+  letter-spacing: .01em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wg-card-sub {
+  font-size: var(--fs-12);
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
+.wg-card-body { padding: 16px; }
+.wg-card-body.flush { padding: 0; }
+.wg-card-body.tight { padding: 12px; }
+
+.wg-card-foot {
+  padding: 12px 16px;
+  border-top: 1px solid var(--hairline);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Section heading used above grids/panels. */
+.wg-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.wg-section h2 { font-size: var(--fs-14); font-weight: 600; }
+.wg-section .wg-section-hint { font-size: var(--fs-12); color: var(--text-dim); }
+
+/* ==========================================================================
+ * Buttons
+ * ======================================================================== */
+
+.wg-btn {
+  --btn-bg: var(--surface-2);
+  --btn-fg: var(--text);
+  --btn-bd: var(--hairline);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 13px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--btn-bd);
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  font-size: var(--fs-13);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  user-select: none;
+  transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease),
+    color var(--dur-1) var(--ease), transform var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease);
+}
+
+.wg-btn:hover:not(:disabled) { background: var(--surface-hover); border-color: var(--hairline-strong); }
+.wg-btn:active:not(:disabled) { transform: translateY(1px); }
+.wg-btn:disabled { opacity: .45; }
+
+.wg-btn svg { width: 15px; height: 15px; flex: none; }
+
+/* Primary: the accent fill is reserved for the single main action per view. */
+.wg-btn.primary {
+  --btn-bg: linear-gradient(180deg, var(--accent-bright), var(--accent));
+  --btn-fg: #04211d;
+  --btn-bd: transparent;
+  font-weight: 600;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .2) inset, 0 6px 16px -8px var(--accent);
+}
+.wg-btn.primary:hover:not(:disabled) {
+  --btn-bg: linear-gradient(180deg, #7ff2e2, var(--accent-bright));
+  --btn-bd: transparent;
+}
+
+.wg-btn.ghost { --btn-bg: transparent; --btn-bd: transparent; color: var(--text-muted); }
+.wg-btn.ghost:hover:not(:disabled) { background: var(--surface-2); color: var(--text); }
+
+.wg-btn.danger {
+  --btn-bg: var(--danger-soft);
+  --btn-fg: var(--danger);
+  --btn-bd: transparent;
+}
+.wg-btn.danger:hover:not(:disabled) {
+  --btn-bg: rgba(248, 113, 113, .2);
+  --btn-bd: transparent;
+}
+
+.wg-btn.sm { height: 28px; padding: 0 10px; font-size: var(--fs-12); border-radius: var(--r-xs); }
+.wg-btn.sm svg { width: 13px; height: 13px; }
+.wg-btn.lg { height: 40px; padding: 0 18px; font-size: var(--fs-14); }
+.wg-btn.block { width: 100%; }
+
+/* Icon-only: square, used for row actions and the theme switch. */
+.wg-icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-xs);
+  color: var(--text-muted);
+  transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
+}
+.wg-icon-btn:hover { background: var(--surface-3); color: var(--text); }
+.wg-icon-btn.danger:hover { background: var(--danger-soft); color: var(--danger); }
+.wg-icon-btn svg { width: 15px; height: 15px; }
+
+/* Busy state: the label is swapped by the component, this is just the spinner. */
+.wg-spin {
+  width: 13px;
+  height: 13px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: wg-spin .7s linear infinite;
+  flex: none;
+}
+
+/* ==========================================================================
+ * Form controls
+ * ======================================================================== */
+
+.wg-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+
+.wg-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-12);
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: .01em;
+}
+.wg-label .req { color: var(--danger); }
+
+.wg-hint { font-size: var(--fs-11); color: var(--text-dim); line-height: 1.5; }
+.wg-hint.error { color: var(--danger); }
+
+.wg-input,
+.wg-select,
+.wg-textarea {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-sm);
+  color: var(--text);
+  font-size: var(--fs-13);
+  padding: 0 11px;
+  height: 34px;
+  transition: border-color var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease),
+    background var(--dur-1) var(--ease);
+}
+
+.wg-textarea {
+  height: auto;
+  min-height: 96px;
+  padding: 9px 11px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.wg-input::placeholder,
+.wg-textarea::placeholder { color: var(--text-dim); }
+
+.wg-input:hover,
+.wg-select:hover,
+.wg-textarea:hover { border-color: var(--hairline-strong); }
+
+.wg-input:focus,
+.wg-select:focus,
+.wg-textarea:focus {
+  border-color: var(--accent-line);
+  box-shadow: var(--ring);
+  background: var(--surface-1);
+}
+
+.wg-input[aria-invalid='true'],
+.wg-textarea[aria-invalid='true'] { border-color: var(--danger); }
+.wg-input[aria-invalid='true']:focus { box-shadow: 0 0 0 3px var(--danger-soft); }
+
+.wg-input.mono, .wg-textarea.mono { font-family: var(--font-mono); font-size: var(--fs-12); }
+
+.wg-input:disabled,
+.wg-select:disabled,
+.wg-textarea:disabled { opacity: .55; }
+
+/* Native select needs its own affordance; a background-image chevron keeps it
+   offline-safe under the CSP (no icon font). */
+.wg-select {
+  appearance: none;
+  padding-right: 30px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b9bb0' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  cursor: pointer;
+}
+
+/* Input with a trailing adornment (unit, toggle, copy button). */
+.wg-input-group { position: relative; display: flex; align-items: center; }
+.wg-input-group .wg-input { padding-right: 68px; }
+.wg-input-group > .wg-suffix {
+  position: absolute;
+  right: 6px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Toggle switch. A real checkbox stays in the a11y tree. */
+.wg-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  user-select: none;
+  font-size: var(--fs-12);
+  color: var(--text-muted);
+}
+.wg-switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+
+.wg-switch .track {
+  width: 36px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  border: 1px solid var(--hairline);
+  position: relative;
+  transition: background var(--dur-2) var(--ease), border-color var(--dur-2) var(--ease);
+  flex: none;
+}
+.wg-switch .track::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: transform var(--dur-2) var(--ease-out), background var(--dur-2) var(--ease);
+  box-shadow: var(--shadow-1);
+}
+.wg-switch input:checked + .track { background: var(--accent-soft); border-color: var(--accent-line); }
+.wg-switch input:checked + .track::after { transform: translateX(16px); background: var(--accent); }
+.wg-switch input:focus-visible + .track { box-shadow: var(--ring); }
+.wg-switch input:disabled + .track { opacity: .45; }
+
+/* Segmented control used for chart ranges and filters. */
+.wg-seg {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-sm);
+}
+.wg-seg button {
+  height: 24px;
+  padding: 0 10px;
+  border-radius: var(--r-xs);
+  font-size: var(--fs-12);
+  color: var(--text-dim);
+  font-weight: 500;
+  transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
+}
+.wg-seg button:hover { color: var(--text); }
+.wg-seg button[aria-pressed='true'] { background: var(--surface-1); color: var(--text); box-shadow: var(--shadow-1); }
+
+/* ==========================================================================
+ * Badges, dots, chips
+ * ======================================================================== */
+
+.wg-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 21px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: var(--fs-11);
+  font-weight: 500;
+  letter-spacing: .01em;
+  white-space: nowrap;
+  background: var(--surface-3);
+  color: var(--text-muted);
+  border: 1px solid transparent;
+}
+.wg-badge[data-tone='ok'] { background: var(--ok-soft); color: var(--ok); }
+.wg-badge[data-tone='warn'] { background: var(--warn-soft); color: var(--warn); }
+.wg-badge[data-tone='danger'] { background: var(--danger-soft); color: var(--danger); }
+.wg-badge[data-tone='info'] { background: var(--info-soft); color: var(--info); }
+.wg-badge[data-tone='accent'] { background: var(--accent-soft); color: var(--accent); }
+.wg-badge[data-tone='violet'] { background: var(--violet-soft); color: var(--violet); }
+.wg-badge.outline { background: transparent; border-color: var(--hairline); color: var(--text-muted); }
+
+/* Status dot with an optional halo for "live" states. */
+.wg-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  flex: none;
+  position: relative;
+}
+.wg-dot[data-tone='ok'] { background: var(--ok); }
+.wg-dot[data-tone='warn'] { background: var(--warn); }
+.wg-dot[data-tone='danger'] { background: var(--danger); }
+.wg-dot[data-tone='accent'] { background: var(--accent); }
+.wg-dot[data-tone='info'] { background: var(--info); }
+.wg-dot.live { animation: wg-pulse 2.1s var(--ease) infinite; }
+.wg-dot.live::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  opacity: .3;
+}
+
+/* ==========================================================================
+ * Tables
+ * ======================================================================== */
+
+.wg-table-wrap { width: 100%; overflow-x: auto; }
+
+.wg-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--fs-13);
+}
+
+.wg-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  text-align: left;
+  font-size: var(--fs-11);
+  font-weight: 500;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  padding: 9px 14px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--hairline);
+  white-space: nowrap;
+}
+
+.wg-table tbody td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--hairline);
+  vertical-align: middle;
+}
+.wg-table tbody tr:last-child td { border-bottom: 0; }
+.wg-table tbody tr { transition: background var(--dur-1) var(--ease); }
+.wg-table tbody tr:hover { background: var(--surface-2); }
+.wg-table tbody tr[data-tone='danger'] { background: linear-gradient(90deg, var(--danger-soft), transparent 45%); }
+
+.wg-table .num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--font-mono); font-size: var(--fs-12); }
+.wg-table .actions { text-align: right; white-space: nowrap; }
+
+/* First column of a list table usually holds the primary identity. */
+.wg-primary-cell { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.wg-primary-cell .name { font-weight: 500; color: var(--text); }
+.wg-primary-cell .meta { font-size: var(--fs-11); color: var(--text-dim); }
+
+/* ==========================================================================
+ * States: empty, skeleton, error
+ * ======================================================================== */
+
+.wg-empty {
+  display: grid;
+  place-items: center;
+  gap: 10px;
+  padding: 46px 24px;
+  text-align: center;
+  color: var(--text-dim);
+}
+.wg-empty .wg-empty-icon {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+  color: var(--text-dim);
+}
+.wg-empty .wg-empty-icon svg { width: 20px; height: 20px; }
+.wg-empty h4 { font-size: var(--fs-13); color: var(--text-muted); font-weight: 500; }
+.wg-empty p { font-size: var(--fs-12); max-width: 34ch; line-height: 1.6; }
+
+.wg-skeleton {
+  border-radius: var(--r-sm);
+  background: linear-gradient(90deg, var(--surface-2) 0%, var(--surface-3) 40%, var(--surface-2) 80%);
+  background-size: 220% 100%;
+  animation: wg-sweep 1.5s var(--ease) infinite;
+}
+
+/* ==========================================================================
+ * KPI tile
+ * ======================================================================== */
+
+.wg-kpi {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 15px 16px;
+  border-radius: var(--r-lg);
+  background: var(--surface-1);
+  border: 1px solid var(--hairline);
+  overflow: hidden;
+  box-shadow: var(--shadow-1);
+}
+/* Corner glow tinted per tone: cheap depth cue, one extra paint layer. */
+.wg-kpi::after {
+  content: '';
+  position: absolute;
+  top: -46px;
+  right: -46px;
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: var(--tone-glow, var(--accent-soft));
+  filter: blur(26px);
+  opacity: .75;
+  pointer-events: none;
+}
+
+.wg-kpi-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.wg-kpi-label {
+  font-size: var(--fs-12);
+  color: var(--text-muted);
+  font-weight: 500;
+  letter-spacing: .01em;
+}
+.wg-kpi-icon {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--r-sm);
+  background: var(--tone-glow, var(--accent-soft));
+  color: var(--tone-fg, var(--accent));
+  flex: none;
+}
+.wg-kpi-icon svg { width: 14px; height: 14px; }
+
+.wg-kpi-value {
+  font-size: var(--fs-26);
+  font-weight: 600;
+  letter-spacing: -.02em;
+  line-height: 1.1;
+  color: var(--text);
+}
+.wg-kpi-value small { font-size: var(--fs-12); font-weight: 500; color: var(--text-dim); margin-left: 4px; }
+
+.wg-kpi-hint {
+  font-size: var(--fs-11);
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 16px;
+}
+
+.wg-kpi[data-tone='accent'] { --tone-glow: var(--accent-soft); --tone-fg: var(--accent); }
+.wg-kpi[data-tone='violet'] { --tone-glow: var(--violet-soft); --tone-fg: var(--violet); }
+.wg-kpi[data-tone='ok'] { --tone-glow: var(--ok-soft); --tone-fg: var(--ok); }
+.wg-kpi[data-tone='warn'] { --tone-glow: var(--warn-soft); --tone-fg: var(--warn); }
+.wg-kpi[data-tone='danger'] { --tone-glow: var(--danger-soft); --tone-fg: var(--danger); }
+.wg-kpi[data-tone='info'] { --tone-glow: var(--info-soft); --tone-fg: var(--info); }
+
+/* ==========================================================================
+ * Overlay: modal + drawer
+ * ======================================================================== */
+
+.wg-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(3, 7, 12, .62);
+  backdrop-filter: blur(3px);
+  animation: wg-fade var(--dur-2) var(--ease) both;
+}
+
+.wg-modal {
+  position: fixed;
+  z-index: 61;
+  /* Centered with inset + auto margins, NOT translate(-50%, -50%): the
+     wg-pop transition and any animation keyframe ending at `transform: none`
+     would otherwise override the centering transform and drop the panel into
+     the bottom-right quadrant with its footer clipped off-screen. */
+  inset: 0;
+  margin: auto;
+  height: fit-content;
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-1);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-3);
+  overflow: hidden;
+}
+.wg-modal.wide { width: min(840px, calc(100vw - 32px)); }
+
+.wg-modal-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 18px 20px 14px;
+}
+.wg-modal-head h3 { font-size: var(--fs-16); }
+.wg-modal-head p { font-size: var(--fs-12); color: var(--text-dim); margin-top: 3px; }
+
+/* The body scrolls while the footer stays pinned: on a short viewport the
+   confirm button must never be pushed below the fold. */
+.wg-modal-body {
+  padding: 0 20px;
+  overflow: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  overscroll-behavior: contain;
+}
+.wg-modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 16px 20px 18px;
+  border-top: 1px solid var(--hairline);
+  margin-top: 16px;
+  flex: 0 0 auto;
+  background: var(--surface-1);
+}
+
+.wg-drawer {
+  position: fixed;
+  z-index: 61;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(520px, 100vw);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-1);
+  border-left: 1px solid var(--hairline-strong);
+  box-shadow: var(--shadow-3);
+  animation: wg-slide-in var(--dur-3) var(--ease-out) both;
+}
+
+/* ==========================================================================
+ * Toasts
+ * ======================================================================== */
+
+.wg-toasts {
+  position: fixed;
+  z-index: 90;
+  right: 18px;
+  bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(360px, calc(100vw - 36px));
+  pointer-events: none;
+}
+
+.wg-toast {
+  pointer-events: auto;
+  display: flex;
+  gap: 10px;
+  padding: 11px 13px;
+  border-radius: var(--r-md);
+  background: var(--surface-1);
+  border: 1px solid var(--hairline-strong);
+  box-shadow: var(--shadow-3);
+  font-size: var(--fs-13);
+  animation: wg-fade-up var(--dur-3) var(--ease-out) both;
+}
+.wg-toast .wg-toast-icon { flex: none; margin-top: 1px; }
+.wg-toast .wg-toast-icon svg { width: 15px; height: 15px; }
+.wg-toast[data-tone='ok'] { border-left: 2px solid var(--ok); }
+.wg-toast[data-tone='ok'] .wg-toast-icon { color: var(--ok); }
+.wg-toast[data-tone='danger'] { border-left: 2px solid var(--danger); }
+.wg-toast[data-tone='danger'] .wg-toast-icon { color: var(--danger); }
+.wg-toast[data-tone='warn'] { border-left: 2px solid var(--warn); }
+.wg-toast[data-tone='warn'] .wg-toast-icon { color: var(--warn); }
+.wg-toast[data-tone='info'] { border-left: 2px solid var(--info); }
+.wg-toast[data-tone='info'] .wg-toast-icon { color: var(--info); }
+
+/* ==========================================================================
+ * Misc: code block, divider, sparkline
+ * ======================================================================== */
+
+.wg-code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-12);
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-sm);
+  padding: 9px 11px;
+  color: var(--text-muted);
+  overflow-x: auto;
+  white-space: pre;
+  line-height: 1.65;
+}
+
+.wg-sep { height: 1px; background: var(--hairline); border: 0; }
+.wg-vsep { width: 1px; align-self: stretch; background: var(--hairline); }
+
+.wg-row { display: flex; align-items: center; gap: 8px; }
+.wg-row.wrap { flex-wrap: wrap; }
+.wg-stack { display: flex; flex-direction: column; gap: 8px; }
+
+.wg-grid { display: grid; gap: 14px; }
+.wg-grid.kpi { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.wg-grid.cols-2 { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+.wg-grid.cols-3 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+
+/* Definition list for read-only key/value detail panes. */
+.wg-kv { display: grid; grid-template-columns: minmax(96px, auto) 1fr; gap: 9px 14px; font-size: var(--fs-12); }
+.wg-kv dt { color: var(--text-dim); }
+.wg-kv dd { color: var(--text); min-width: 0; overflow-wrap: anywhere; }
+
+/* ==========================================================================
+ * Traffic chart: canvas + idle overlay
+ * The canvas stays mounted so the ECharts instance and its ResizeObserver
+ * survive an idle -> active transition; the overlay simply covers it.
+ * ======================================================================== */
+
+.wg-chart { position: relative; }
+.wg-chart-canvas { width: 100%; height: 100%; }
+
+.wg-chart-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 8px;
+  text-align: center;
+  background: var(--surface-1);
+  color: var(--text-dim);
+  font-size: var(--fs-12);
+}
+.wg-chart-empty-icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 2px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+  color: var(--text-dim);
+}
+.wg-chart-empty strong {
+  font-size: var(--fs-13);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+.wg-chart-empty span { max-width: 38ch; line-height: 1.6; }

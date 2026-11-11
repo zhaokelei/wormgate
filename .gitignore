@@ -1,0 +1,29 @@
+# Go 构建产物（scripts/build.sh 输出；go:embed 用到的 internal/webui/*/dist 需要提交，别加进来）
+/bin/
+/dist/
+/release/
+
+# 本地运行状态、凭据、日志
+.run/
+data/
+client-data/
+diagboot.exe
+*.log
+*.pid
+
+# 本地试验目录
+enc-test/
+encui/
+
+# Windows 可执行文件与备份
+*.exe
+*.exe~
+*.bak
+
+# Node 依赖（构建时 npm ci / npm install 恢复）
+node_modules/
+
+# 工作区与编辑器
+.workbuddy/
+.DS_Store
+Thumbs.db

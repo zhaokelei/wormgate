@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Wormgate 服务端控制台</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='13' fill='%230b1119'/%3E%3Cpath d='M10 31.5c0-7.7 6.3-14 14-14s14 6.3 14 14' stroke='%23a78bfa' stroke-width='3.4' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='24' cy='33' r='3.2' fill='%23e8eef7'/%3E%3C/svg%3E"
+    />
+    <!-- Blocking on purpose: the theme has to be on <html> before first paint.
+         External file, not inline, because CSP is script-src 'self'. -->
+    <script src="/admin/theme-init.js"></script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <noscript>此控制台需要启用 JavaScript。</noscript>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
