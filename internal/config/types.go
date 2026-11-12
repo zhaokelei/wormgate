@@ -86,6 +86,13 @@ type ServerConfig struct {
 	Metrics           MetricsConfig     `yaml:"metrics"`
 	Auth              AuthConfig        `yaml:"auth"`
 	Quota             QuotaConfig       `yaml:"quota"`
+	// TrustedProxies lists the CIDRs of reverse proxies sitting in front of the
+	// public HTTP ingress. Only when the immediate peer is in this list is its
+	// X-Forwarded-For header believed; the client address it reports is then
+	// handed to the tunnel backend as X-Real-IP. Leave empty when Wormgate
+	// terminates connections itself, otherwise a caller could forge its own
+	// address.
+	TrustedProxies []string `yaml:"trusted_proxies"`
 	// StreamSecret keys the optional per-tunnel AES-256-GCM layer. Leave empty
 	// to disable it: tunnels that request encryption are then rejected at
 	// registration instead of running unencrypted by accident.

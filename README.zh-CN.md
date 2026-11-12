@@ -84,7 +84,7 @@ browser -> public ingress -> matchHost(host, domain) -> registry.BySubdomain
 
 **握手**：客户端先拨 `wss://host:7000/control`，带 `Authorization: Bearer <token>`，**必须在 10 秒内发出首帧 `hello`**（否则服务端关闭连接）；服务端回 `hello_ok`（含 `session_id`、心跳周期）；客户端再用 `X-Wormgate-Session` 头拨 `wss://host:7000/data`，`websocket.NetConn(..., MessageBinary)` 承载 yamux；随后 `register` / `tunnel_result` 完成注册。心跳默认 15s，会话超时 45s。
 
-**路由默认是拒绝的**：`matchHost` 要求 Host 严格为 `<sub>.<domain>`、sub 是单层合法 DNS label、且 registry 中存在该 sub，否则一律 404。伪造的 `X-Forwarded-*`、`X-Real-IP`、`X-Wormgate-Tunnel` 会在代理前被剥离并重新注入可信值。
+**路由默认是拒绝的**：`matchHost` 要求 Host 严格为 `<sub>.<domain>`、sub 是单层合法 DNS label、且 registry 中存在该 sub，否则一律 404。伪造的 `X-Forwarded-*`、`X-Real-IP`、`X-Wormgate-Tunnel` 会在代理前被剥离并重新注入可信值。唯一的例外是连接来自 `server.trusted_proxies` 里列出的网段：此时链上最右侧的非可信地址会被当作真实客户端，这样 Wormgate 前面挂负载均衡时仍能拿到访客地址。
 
 ---
 
@@ -226,6 +226,11 @@ server:
     bind_addr: "0.0.0.0"
     advertise_host: ""
     port_range: "20000-30000"
+  # HTTP 入口前面的反向代理网段：只有来自这些地址的连接，其 X-Forwarded-For
+  # 才会被采信。Wormgate 自己直接收连接时留空，转发头一律丢弃，调用方无法
+  # 自称任意地址。填了之后，链上最右侧的非可信地址会成为后端的 X-Real-IP。
+  # trusted_proxies: ["172.19.0.0/16", "127.0.0.1"]
+  trusted_proxies: []
   # 可选的隧道流加密密钥。留空 = 关闭；填了之后，请求 encryption 的隧道
   # 才会加密，其余隧道照常（不强制）。必须与客户端配置一致。
   stream_secret: ""

@@ -88,7 +88,7 @@ browser -> public ingress -> matchHost(host, domain) -> registry.BySubdomain
 
 **Handshake.** The client dials `wss://host:7000/control` with `Authorization: Bearer <token>` and must send its first `hello` frame within 10 seconds or the server drops the connection. The server replies `hello_ok` (containing `session_id` and heartbeat intervals). The client then dials `wss://host:7000/data` with the `X-Wormgate-Session` header; `websocket.NetConn(..., MessageBinary)` carries yamux. `register` / `tunnel_result` complete registration. Heartbeat defaults to 15 s, session timeout to 45 s.
 
-**Routing is deny by default.** `matchHost` requires the `Host` to be exactly `<sub>.<domain>`, with `sub` a single valid DNS label that exists in the registry; anything else gets a 404. Spoofed `X-Forwarded-*`, `X-Real-IP`, and `X-Wormgate-Tunnel` headers are stripped before proxying and replaced with trusted values.
+**Routing is deny by default.** `matchHost` requires the `Host` to be exactly `<sub>.<domain>`, with `sub` a single valid DNS label that exists in the registry; anything else gets a 404. Spoofed `X-Forwarded-*`, `X-Real-IP`, and `X-Wormgate-Tunnel` headers are stripped before proxying and replaced with trusted values. The only exception is a connection from a network listed in `server.trusted_proxies`: there the rightmost untrusted address in `X-Forwarded-For` becomes the reported client, which is how a load balancer in front of Wormgate still yields real visitor addresses.
 
 ---
 
@@ -230,6 +230,13 @@ server:
     bind_addr: "0.0.0.0"
     advertise_host: ""
     port_range: "20000-30000"
+  # Reverse proxies in front of the HTTP ingress whose X-Forwarded-For may be
+  # believed. Leave empty when Wormgate accepts connections itself: the
+  # forwarding headers are then always discarded, so a caller cannot claim an
+  # address it does not own. With an entry here, the rightmost untrusted
+  # address in the chain becomes X-Real-IP for the tunnel backend.
+  # trusted_proxies: ["172.19.0.0/16", "127.0.0.1"]
+  trusted_proxies: []
   # Optional per-tunnel stream-encryption key. Empty = feature disabled.
   # When set, only tunnels that request encryption are encrypted; all other
   # tunnels behave as before (opt-in, never forced). Must match the client.

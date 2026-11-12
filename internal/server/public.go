@@ -94,6 +94,77 @@ func stripHostPort(host string) string {
 	return host
 }
 
+// parseTrustedProxies expands the configured CIDRs, accepting a bare address
+// as a single-host network. A bad entry fails startup instead of silently
+// trusting nothing: a typo would otherwise surface later as every visitor
+// sharing the load balancer's address.
+func parseTrustedProxies(entries []string) ([]*net.IPNet, error) {
+	out := make([]*net.IPNet, 0, len(entries))
+	for _, raw := range entries {
+		raw = strings.TrimSpace(raw)
+		if raw == "" {
+			continue
+		}
+		if !strings.Contains(raw, "/") {
+			ip := net.ParseIP(raw)
+			if ip == nil {
+				return nil, fmt.Errorf("server.trusted_proxies: %q is not an address or CIDR", raw)
+			}
+			bits := 128
+			if ip.To4() != nil {
+				bits = 32
+			}
+			raw = fmt.Sprintf("%s/%d", ip.String(), bits)
+		}
+		_, network, err := net.ParseCIDR(raw)
+		if err != nil {
+			return nil, fmt.Errorf("server.trusted_proxies: %w", err)
+		}
+		out = append(out, network)
+	}
+	return out, nil
+}
+
+func (s *Server) isTrustedProxy(ip net.IP) bool {
+	for _, network := range s.trustedProxies {
+		if network.Contains(ip) {
+			return true
+		}
+	}
+	return false
+}
+
+// clientIP decides which address a tunnel backend should see as its caller.
+//
+// The connection address is the answer unless the peer is a configured trusted
+// proxy — behind a load balancer every request would otherwise arrive as the
+// balancer itself. When the peer is trusted, the rightmost untrusted entry in
+// X-Forwarded-For wins: anything further left was appended by the client and
+// proves nothing.
+func (s *Server) clientIP(source string, h http.Header) string {
+	direct := stripHostPort(source)
+	ip := net.ParseIP(direct)
+	if ip == nil || !s.isTrustedProxy(ip) {
+		return direct
+	}
+	var chain []string
+	for _, line := range h.Values("X-Forwarded-For") {
+		for _, part := range strings.Split(line, ",") {
+			if p := strings.TrimSpace(part); p != "" {
+				chain = append(chain, p)
+			}
+		}
+	}
+	for i := len(chain) - 1; i >= 0; i-- {
+		cand := net.ParseIP(stripHostPort(chain[i]))
+		if cand == nil || s.isTrustedProxy(cand) {
+			continue
+		}
+		return cand.String()
+	}
+	return direct
+}
+
 // directProxy rewrites the outbound request. The fake URL host is unique per
 // registration, which keeps net/http's connection pool isolated per tunnel.
 func (s *Server) directProxy(req *http.Request) {
@@ -105,19 +176,28 @@ func (s *Server) directProxy(req *http.Request) {
 	req.URL.Host = "tunnel-" + meta.reg.ID + ".invalid"
 	req.Host = meta.host
 	// SECURITY: never trust client-supplied forwarding headers on the public
-	// ingress. Replace them with values Wormgate observed itself.
+	// ingress. They are replaced with a value Wormgate can stand behind: the
+	// address it observed itself, or — when the peer is a configured trusted
+	// proxy — the client address that proxy reported.
+	client := s.clientIP(meta.source, req.Header)
 	req.Header.Del("X-Forwarded-For")
 	req.Header.Del("X-Forwarded-Host")
 	req.Header.Del("X-Forwarded-Proto")
 	req.Header.Del("X-Real-IP")
 	req.Header.Del("X-Wormgate-Tunnel")
 	req.Header.Del("X-Wormgate-Trace")
-	req.Header.Set("X-Forwarded-For", stripHostPort(meta.source))
+	req.Header.Del("X-Wormgate-Proxy")
+	req.Header.Set("X-Forwarded-For", client)
 	req.Header.Set("X-Forwarded-Host", meta.host)
 	req.Header.Set("X-Forwarded-Proto", meta.scheme)
-	req.Header.Set("X-Real-IP", stripHostPort(meta.source))
+	req.Header.Set("X-Real-IP", client)
 	req.Header.Set("X-Wormgate-Tunnel", meta.reg.Name)
 	req.Header.Set("X-Wormgate-Trace", meta.trace)
+	if peer := stripHostPort(meta.source); peer != client {
+		// Keep the proxy hop visible so a backend can tell a direct caller from
+		// one that arrived through a load balancer.
+		req.Header.Set("X-Wormgate-Proxy", peer)
+	}
 }
 
 // dialTunnel is the http.Transport dialer. Each physical HTTP connection to a

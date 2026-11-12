@@ -46,6 +46,10 @@ type Server struct {
 	transport *http.Transport
 	proxy     *httputil.ReverseProxy
 
+	// trustedProxies are the networks whose X-Forwarded-For is believed when
+	// reporting the client address to a tunnel backend.
+	trustedProxies []*net.IPNet
+
 	bootstrap    *auth.Bootstrap
 	adminLimiter *webui.LoginLimiter
 
@@ -113,23 +117,28 @@ func New(mgr *config.Manager, logger *logx.Logger) (*Server, error) {
 	if err != nil {
 		return nil, fmt.Errorf("configure TLS: %w", err)
 	}
+	trusted, err := parseTrustedProxies(cfg.Server.TrustedProxies)
+	if err != nil {
+		return nil, err
+	}
 	s := &Server{
-		cfg:          mgr,
-		log:          logger,
-		users:        users,
-		audit:        auditLog,
-		alerts:       alerts.New(200),
-		metrics:      newMetrics(),
-		registry:     newRegistry(),
-		stats:        newStats(),
-		usage:        newUsage(),
-		tlsCfg:       tlsCfg,
-		bootstrap:    boot,
-		adminLimiter: webui.NewLoginLimiter(10, time.Minute),
-		sessions:     map[string]*ClientSession{},
-		byClient:     map[string]*ClientSession{},
-		startedAt:    time.Now(),
-		sys:          sysinfo.NewSampler(2 * time.Second),
+		cfg:            mgr,
+		log:            logger,
+		users:          users,
+		audit:          auditLog,
+		alerts:         alerts.New(200),
+		metrics:        newMetrics(),
+		registry:       newRegistry(),
+		stats:          newStats(),
+		usage:          newUsage(),
+		tlsCfg:         tlsCfg,
+		trustedProxies: trusted,
+		bootstrap:      boot,
+		adminLimiter:   webui.NewLoginLimiter(10, time.Minute),
+		sessions:       map[string]*ClientSession{},
+		byClient:       map[string]*ClientSession{},
+		startedAt:      time.Now(),
+		sys:            sysinfo.NewSampler(2 * time.Second),
 	}
 	s.sys.Start()
 	s.transport = &http.Transport{
@@ -214,6 +223,8 @@ func restartReason(old, next *config.Config) string {
 		return "server.metrics listener"
 	case o.TLS != n.TLS:
 		return "server.tls"
+	case strings.Join(o.TrustedProxies, ",") != strings.Join(n.TrustedProxies, ","):
+		return "server.trusted_proxies"
 	case o.DataDir != n.DataDir:
 		return "server.data_dir"
 	case o.WebUI.AdminUser != n.WebUI.AdminUser || o.WebUI.AdminPassword != n.WebUI.AdminPassword || o.WebUI.AdminPasswordHash != n.WebUI.AdminPasswordHash:
